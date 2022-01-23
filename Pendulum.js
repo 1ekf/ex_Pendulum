@@ -85,14 +85,14 @@ var tick = (elapsedTime, multiplier) => {
 
     const t = elapsedTime * multiplier;
 
+    computeCoeffs();
+
     th = getTh(t);
     dth = getDTh(t);
 
     th = ((th + Math.PI) % (2 * Math.PI)) - Math.PI;
 
-    computeCoeffs();
     theory.invalidateTertiaryEquation();
-
 
 }
 
