@@ -2,7 +2,7 @@ var id = "eaux_pendulum";
 var name = "Pendulum Theory";
 var description = "TODO";
 var authors = "Eaux Tacous#1021";
-var version = 1;
+var version = 2;
 
 var currency;
 
