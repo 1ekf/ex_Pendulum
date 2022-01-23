@@ -7,6 +7,7 @@ var version = 2;
 var currency;
 
 var th, v;
+var b, m, g, l;
 
 var init = () => {
 
@@ -16,6 +17,10 @@ var init = () => {
     dth = 0;
     nudge = 0;
 
+    b = 2;
+    m = 10;
+    g = 10;
+    l = 5;
 
 }
 
@@ -41,8 +46,44 @@ var getUpgradeListDelegate = () => {
         nudge = e.type.isReleased() ? 0 : 0.5;
     }
 
+    let lengthDown = ui.createButton({
+        text: 'decrease length\n',
+        row: 1,
+        column: 0
+    })
+    lengthDown.onClicked = () => {
+        l = Math.max(l-1, 2);
+    }
+
+    let lengthUp = ui.createButton({
+        text: 'increase length\n',
+        row: 1,
+        column: 1
+    })
+    lengthUp.onClicked = () => {
+        l = Math.min(l+1, 10);
+    }
+
+    let gravDown = ui.createButton({
+        text: 'decrease gravity\n',
+        row: 2,
+        column: 0
+    })
+    gravDown.onClicked = () => {
+        g = Math.max(g-2, 0);
+    }
+
+    let gravUp = ui.createButton({
+        text: 'increase gravity\n',
+        row: 2,
+        column: 1
+    })
+    gravUp.onClicked = () => {
+        g = Math.min(g+2, 20);
+    }
+
     const grid = ui.createGrid({
-        children: [leftButton, rightButton]
+        children: [leftButton, rightButton, lengthDown, lengthUp, gravDown, gravUp]
     })
 
     return grid;
@@ -51,11 +92,6 @@ var getUpgradeListDelegate = () => {
 
 var computeCoeffs, computeCoeffs2, getTh, getDTh;
 {
-
-    const b = 2;
-    const m = 10;
-    const g = 10;
-    const l = 5;
 
     const stepWeights = [0, 1/2, 1/2, 1];
     const finalWeights = [1/6, 1/3, 1/3, 1/6];
@@ -119,13 +155,13 @@ var tick = (elapsedTime, multiplier) => {
 }
 
 var thToVec = (th) => {
-    const x = Math.sin(th);
-    const y = Math.cos(th)-0.25;
+    const x = (l * Math.sin(th)) * 0.1;
+    const y = (l * Math.cos(th)) * 0.1 - 0.25;
     const z = 0;
     return Vector3(x, y, z);
 }
 
 var get3DGraphPoint = () => thToVec(th);
-var getTertiaryEquation = () => th.toString();
+var getTertiaryEquation = () => `g = ${g} \\quad l = ${l} \\quad \\theta = ${th.toFixed(2)} \\quad d\\theta = ${dth.toFixed(2)}`
 
 init();
