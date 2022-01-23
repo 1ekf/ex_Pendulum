@@ -16,7 +16,6 @@ var init = () => {
     dth = 0;
     nudge = 0;
 
-    computeCoeffs();
 
 }
 
@@ -50,47 +49,70 @@ var getUpgradeListDelegate = () => {
 }
 
 
-var computeCoeffs, getTh, getDTh;
+var computeCoeffs, computeCoeffs2, getTh, getDTh;
 {
-    let f1, f2, c1, c2, d1, d2, off;
 
     const b = 2;
     const m = 10;
     const g = 10;
     const l = 5;
 
-    computeCoeffs = () => {
+    const stepWeights = [0, 1/2, 1/2, 1];
+    const finalWeights = [1/6, 1/3, 1/3, 1/6];
 
-        const X1 = b/m;
-        const X2 = g/l;
+    const add = (a, b) => a+b;
 
-        if (4 * X2 > X1 * X1) {
-            f1 = - X1 / 2;
-            f2 = Math.sqrt(X2 - f1 * f1);
-            off = nudge / X2;
-            c1 = th - off;
-            d1 = dth;
-            c2 = (d1 - c1 * f1) / f2;
-            d2 = c2 * f1 - c1 * f2;
+    // Algorithm source: https://willbeason.com/2021/06/25/improve-your-runge-kutta-nystrom-algorithms-with-this-one-weird-trick/
+    const RK4N = (t0, y0, yp0, h, f) => {
+
+        let yps = [];
+        let ks = [];
+        let prevk;
+
+        const ypp0 = f(t0, y0, yp0);
+        yps.push(yp0);
+        ks.push(ypp0);
+        prevk = ypp0;
+
+        for (let idx = 1; idx < stepWeights.length; idx++) {
+
+            const dt = h * stepWeights[idx];
+            const dyp = prevk * dt;
+            const dy = dt * (yp0 + dyp/3 + dt*ypp0/6);
+
+            ks.push(f(t0+dt, y0+dy, yp0+dyp));
+            yps.push(yp0+dyp);
+
         }
+
+        const yp1 = yp0 + ks.map((k, i) => h * finalWeights[i] * k).reduce(add, 0);
+        const y1 = y0 + yps.map((y, i) => h * finalWeights[i] * y).reduce(add, 0);
+
+        return [y1, yp1];
 
     }
 
-    getTh = (t) => off + Math.exp(f1*t) * (c1 * Math.cos(f2*t) + c2 * Math.sin(f2*t));
+    const f = (t, y, yp) => {
 
-    getDTh = (t) => Math.exp(f1*t) * (d1 * Math.cos(f2*t) + d2 * Math.sin(f2*t));
+        return -(g/l * Math.sin(y) + b/m * yp) + nudge;
+    }
+
+    computeCoeffs = (timeElapsed) => {
+        const res = RK4N(0, th, dth, timeElapsed, f);
+        [th, dth] = res;
+    }
+
 }
 
 var tick = (elapsedTime, multiplier) => {
 
     const t = elapsedTime * multiplier;
 
-    computeCoeffs();
+    const steps = Math.ceil(t * 5);
 
-    th = getTh(t);
-    dth = getDTh(t);
+    for (let i = 0; i < steps; i++) computeCoeffs(t/steps);
 
-    th = ((th + Math.PI) % (2 * Math.PI)) - Math.PI;
+    th = (th + Math.PI) % (2 * Math.PI) - Math.PI;
 
     theory.invalidateTertiaryEquation();
 
